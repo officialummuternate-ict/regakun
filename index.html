@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pusat Akses Layanan Aplikasi Web & Hotspot - UMMU</title>
+    <link id="dynamicFavicon" rel="icon" type="image/png" href="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UMMU">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -49,7 +50,6 @@
 
             <!-- TOMBOL KANAN NAVBAR -->
             <div class="flex items-center gap-2.5">
-                <!-- Saat Belum Login Admin -->
                 <div id="guestNavActions" class="flex items-center gap-2.5">
                     <button onclick="openWifiRegModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/25 transition flex items-center gap-2">
                         <i class="fas fa-wifi"></i> <span>Daftar WiFi</span>
@@ -59,7 +59,6 @@
                     </button>
                 </div>
 
-                <!-- Saat Sudah Login Admin -->
                 <div id="adminNavActions" class="hidden items-center gap-2.5">
                     <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700">
                         <button id="btnViewUser" onclick="switchView('user')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
@@ -80,7 +79,7 @@
     <!-- NOTIFIKASI FLASH MESSAGE -->
     <div id="flashContainer" class="max-w-7xl mx-auto px-4 sm:px-6 mt-6 w-full hidden"></div>
 
-    <!-- KARTU VOUCHER WIFI OTOMATIS SETELAH PENDAFTARAN BERHASIL -->
+    <!-- KOTAK INFORMASI PROSES 1X24 JAM SETELAH PENDAFTARAN BERHASIL -->
     <div id="voucherCardContainer" class="max-w-3xl mx-auto px-4 sm:px-6 mt-6 w-full hidden"></div>
 
     <!-- ========================================================= -->
@@ -202,7 +201,7 @@
                         </span>
                     </div>
                     <h1 class="text-2xl font-extrabold text-slate-900 mt-1">Dashboard Administrator Portal UMMU</h1>
-                    <p class="text-xs text-slate-500">Kelola aplikasi web, logo dinamis, member WiFi, filter tanggal, serta koneksi Google Sheets.</p>
+                    <p class="text-xs text-slate-500">Kelola aplikasi web, logo dinamis (tersimpan di Google Sheets), member WiFi, serta filter tanggal.</p>
                 </div>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -461,7 +460,7 @@
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
                     <button type="button" onclick="closeModal('wifiRegModal')" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Batal</button>
                     <button type="submit" id="btnSubmitWifi" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg">
-                        <i class="fas fa-check-circle mr-1"></i> Simpan & Aktifkan Akun WiFi
+                        <i class="fas fa-check-circle mr-1"></i> Simpan & Ajukan Akun WiFi
                     </button>
                 </div>
             </form>
@@ -482,7 +481,7 @@
                 <div>
                     <label class="block font-extrabold uppercase text-slate-600 mb-1">URL Web App Google Apps Script (Berakhiran /exec)</label>
                     <input type="url" id="gs_script_url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
-                    <p class="text-[11px] text-slate-500 mt-1.5">Jika dikosongkan, sistem otomatis menyimpan perubahan di penyimpanan browser lokal sekaligus siap disinkronkan kapan saja.</p>
+                    <p class="text-[11px] text-slate-500 mt-1.5">Saat terhubung, seluruh data pendaftar WiFi, direktori aplikasi, dan perubahan Logo Portal langsung tersimpan di Google Sheets.</p>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeModal('gsConfigModal')" class="px-5 py-3 rounded-xl bg-slate-100 font-bold">Batal</button>
@@ -596,27 +595,33 @@
         </div>
     </div>
 
-    <!-- MODAL GANTI LOGO PORTAL DINAMIS -->
+    <!-- MODAL GANTI LOGO PORTAL DINAMIS (TERSIMPAN DI GOOGLE SHEETS) -->
     <div id="logoModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
             <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
                 <div>
                     <h3 class="text-lg font-extrabold">Ganti Logo Portal Dinamis</h3>
-                    <p class="text-xs text-slate-400">Unggah file gambar logo atau masukkan URL</p>
+                    <p class="text-xs text-slate-400">Tersimpan permanen di Database Google Sheets</p>
                 </div>
                 <button onclick="closeModal('logoModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
             </div>
             <form onsubmit="updatePortalLogo(event)" class="p-6 space-y-4 text-xs">
+                <div class="text-center mb-3">
+                    <p class="font-bold text-slate-600 mb-2">Logo Saat Ini:</p>
+                    <div class="w-16 h-16 mx-auto rounded-2xl border bg-slate-50 flex items-center justify-center p-1 shadow-inner">
+                        <img id="modalPreviewLogoImg" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UMMU" alt="Current Logo" class="w-full h-full object-contain">
+                    </div>
+                </div>
                 <div>
-                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Upload File Logo (PNG/JPG/SVG/WEBP)</label>
+                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Upload File Logo Baru (PNG/JPG/SVG/WEBP)</label>
                     <input type="file" id="logo_file_input" accept="image/*" class="w-full border border-slate-200 rounded-xl p-2 bg-slate-50">
                 </div>
                 <div>
-                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Atau Masukkan URL Logo</label>
+                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Atau Masukkan URL Gambar Logo</label>
                     <input type="url" id="logo_url_input" placeholder="https://www.ummu.ac.id/logo.png" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl uppercase tracking-wider shadow transition">
-                    Simpan Perubahan Logo
+                <button type="submit" id="btnSaveLogo" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl uppercase tracking-wider shadow transition">
+                    Simpan Logo ke Google Sheets
                 </button>
             </form>
         </div>
@@ -717,7 +722,7 @@
                 </div>`;
         }
 
-        // SINKRONISASI DARI GOOGLE SHEETS SAAT HALAMAN DIBUKA
+        // SINKRONISASI DATA & LOGO DARI GOOGLE SHEETS SAAT HALAMAN DIBUKA
         async function loadFromGoogleSheets() {
             const badge = document.getElementById('dbStatusBadge');
             if (!GOOGLE_SCRIPT_URL) {
@@ -731,6 +736,14 @@
                 if (json.status === 'success') {
                     if (Array.isArray(json.apps) && json.apps.length) appsData = json.apps;
                     if (Array.isArray(json.wifiMembers)) wifiMembersData = json.wifiMembers;
+                    if (json.settings) {
+                        if (json.settings.app_logo) {
+                            applyLogoToDOM(json.settings.app_logo);
+                        }
+                        if (json.settings.admin_pass) {
+                            localStorage.setItem('ummu_admin_pass', String(json.settings.admin_pass));
+                        }
+                    }
                     saveLocalCache();
                     renderAll();
                     if (badge) badge.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Terhubung ke Google Sheets`;
@@ -958,7 +971,7 @@
         }
 
         // =========================================================================
-        // 3. REGISTRASI WIFI, CEK STATUS, & CRUD ADMIN
+        // 3. REGISTRASI WIFI & KOTAK INFORMASI PROSES 1X24 JAM
         // =========================================================================
         function toggleWifiUnitFields() {
             const type = document.getElementById('wifi_type').value;
@@ -1043,8 +1056,8 @@
                 showFlash(`Data akun WiFi (${idNumber} - ${name}) berhasil diperbarui!`);
             } else {
                 wifiMembersData.unshift(memberObj);
-                showFlash('Registrasi Akun WiFi Kampus Berhasil! Kredensial Anda siap digunakan.');
-                showSingleVoucherCard(memberObj);
+                showFlash('Registrasi Akun WiFi Kampus Berhasil Dikirim! Akun akan diproses 1x24 jam, mohon dicek setiap saat.');
+                showProcessingInfoCard(memberObj);
             }
 
             saveLocalCache();
@@ -1054,30 +1067,32 @@
             await postToGoogleSheets({ action: 'register_wifi', is_edit: isEdit, ...memberObj });
         }
 
-        function showSingleVoucherCard(m) {
+        // TAMPILAN KOTAK INFORMASI PROSES 1X24 JAM (PENGGANTI KARTU KREDENSIAL)
+        function showProcessingInfoCard(m) {
             const prof = m.type === 'lecturer' ? 'Dosen_15M (15 Mbps)' : (m.type === 'employee' ? 'Pegawai_10M (10 Mbps)' : 'Mahasiswa_5M (5 Mbps)');
             const box = document.getElementById('voucherCardContainer');
             box.classList.remove('hidden');
             box.innerHTML = `
-            <div class="bg-white rounded-3xl border-2 border-emerald-500 shadow-2xl overflow-hidden p-6 sm:p-8">
+            <div class="bg-white rounded-3xl border-2 border-amber-500 shadow-2xl overflow-hidden p-6 sm:p-8">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
-                            <i class="fas fa-id-card"></i>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl shrink-0">
+                            <i class="fas fa-clock"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-extrabold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Registrasi Berhasil</span>
-                            <h3 class="text-lg font-extrabold text-slate-900 mt-0.5">Kartu Kredensial Hotspot UMMU</h3>
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">Registrasi Berhasil Diterima</span>
+                            <h3 class="text-lg font-extrabold text-slate-900 mt-0.5">Informasi: Akun Akan Diproses 1x24 Jam</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Mohon dicek setiap saat melalui menu <b>Cek Status Live MikroTik/RADIUS</b>.</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="printSingleWifiCard()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow flex items-center gap-2">
-                            <i class="fas fa-print"></i> Cetak Kartu Akun
+                        <button onclick="quickInspectWifi('${m.identity_number}')" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow flex items-center gap-2">
+                            <i class="fas fa-satellite-dish"></i> Cek Status Akun
                         </button>
-                        <button onclick="document.getElementById('voucherCardContainer').classList.add('hidden')" class="bg-slate-100 text-slate-600 px-3 py-2.5 rounded-xl text-xs font-bold">Tutup</button>
+                        <button onclick="document.getElementById('voucherCardContainer').classList.add('hidden')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 py-2.5 rounded-xl text-xs font-bold">Tutup</button>
                     </div>
                 </div>
-                <div id="printableSingleCard" class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-5 bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-5 bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs">
                     <div>
                         <span class="text-slate-400 font-semibold block">Nama Lengkap Sivitas:</span>
                         <span class="text-sm font-extrabold text-slate-900">${m.name}</span>
@@ -1086,20 +1101,23 @@
                         <span class="text-slate-400 font-semibold block">Unit / Fakultas & Prodi:</span>
                         <span class="font-bold text-slate-800">${m.faculty} / ${m.department}</span>
                     </div>
-                    <div class="bg-white p-3.5 rounded-xl border border-blue-200">
-                        <span class="text-[10px] font-extrabold uppercase text-blue-600 block">Username Login WiFi (NIM/NIP):</span>
+                    <div class="bg-white p-3.5 rounded-xl border border-amber-200">
+                        <span class="text-[10px] font-extrabold uppercase text-amber-700 block">Identitas Pendaftar (NIM/NIDN/NIP):</span>
                         <span class="text-base font-black text-slate-900 font-mono">${m.identity_number}</span>
                     </div>
-                    <div class="bg-white p-3.5 rounded-xl border border-blue-200">
-                        <span class="text-[10px] font-extrabold uppercase text-blue-600 block">Password Default Hotspot:</span>
-                        <span class="text-base font-black text-slate-900 font-mono">${m.identity_number}</span>
+                    <div class="bg-white p-3.5 rounded-xl border border-amber-200">
+                        <span class="text-[10px] font-extrabold uppercase text-amber-700 block">Status Verifikasi & Aktivasi:</span>
+                        <span class="text-xs font-extrabold text-amber-600 flex items-center gap-1.5 mt-1">
+                            <i class="fas fa-hourglass-half animate-spin"></i> Diproses 1x24 Jam (Mohon Dicek Setiap Saat)
+                        </span>
                     </div>
                     <div class="sm:col-span-2 flex items-center justify-between text-[11px] text-slate-500 pt-2">
                         <span>Profil Bandwidth: <strong class="text-slate-800">${prof}</strong></span>
-                        <span>Tgl Aktif: <strong>${m.input_date}</strong></span>
+                        <span>Tgl Pengajuan: <strong>${m.input_date}</strong></span>
                     </div>
                 </div>
             </div>`;
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         async function deleteWifiMember(idNum) {
@@ -1134,6 +1152,9 @@
                     </div>
                     <div class="text-sm font-extrabold pt-1">${d.name}</div>
                     <div class="text-[11px] text-emerald-800">Identitas (Username): <b class="font-mono">${d.identity_number}</b> • Profil: <b>${prof}</b> • Tgl Daftar: <b>${d.input_date}</b></div>
+                    <div class="text-[11px] text-amber-800 bg-amber-100/70 px-2.5 py-1.5 rounded-lg mt-2 font-semibold">
+                        <i class="fas fa-info-circle mr-1"></i> Jika baru mendaftar hari ini, sinkronisasi ke router MikroTik/RADIUS diproses maksimal 1x24 jam. Mohon dicek setiap saat.
+                    </div>
                 </div>`;
             } else {
                 box.innerHTML = `
@@ -1313,7 +1334,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // LOGIN, LOGO, & NAVIGASI VIEW
+        // LOGIN, LOGO GOOGLE SHEETS, & NAVIGASI VIEW
         function handleAdminLogin(e) {
             e.preventDefault();
             const u = document.getElementById('login_user').value.trim();
@@ -1376,45 +1397,85 @@
             showFlash('Konfigurasi URL Google Sheets berhasil disimpan!');
         }
 
-        function updatePortalLogo(e) {
+        // KOMPRESI GAMBAR LOGO AGAR MUAT DI SEL GOOGLE SHEETS (< 50.000 KARAKTER)
+        function compressLogoFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const maxDim = 180;
+                        let w = img.width, h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                            else { w = Math.round(w * maxDim / h); h = maxDim; }
+                        }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = reject;
+                    img.src = ev.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function updatePortalLogo(e) {
             e.preventDefault();
             const file = document.getElementById('logo_file_input').files[0];
             const urlTxt = document.getElementById('logo_url_input').value.trim();
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    applyLogo(ev.target.result);
-                };
-                reader.readAsDataURL(file);
-            } else if (urlTxt) {
-                applyLogo(urlTxt);
+            const btn = document.getElementById('btnSaveLogo');
+            let newLogoData = '';
+
+            btn.innerText = 'Menyimpan Logo...';
+            btn.disabled = true;
+
+            try {
+                if (file) {
+                    newLogoData = await compressLogoFile(file);
+                } else if (urlTxt) {
+                    newLogoData = urlTxt;
+                }
+
+                if (newLogoData) {
+                    applyLogoToDOM(newLogoData);
+                    await postToGoogleSheets({ action: 'update_logo', app_logo: newLogoData });
+                    showFlash('Logo Portal & Favicon berhasil diperbarui dan disimpan di Google Sheets!');
+                }
+            } catch (err) {
+                alert('Gagal memproses file gambar logo.');
+            } finally {
+                btn.innerText = 'Simpan Logo ke Google Sheets';
+                btn.disabled = false;
+                document.getElementById('logo_file_input').value = '';
+                document.getElementById('logo_url_input').value = '';
+                closeModal('logoModal');
             }
-            closeModal('logoModal');
         }
 
-        function applyLogo(src) {
+        function applyLogoToDOM(src) {
             localStorage.setItem('ummu_logo', src);
             document.getElementById('navLogoImg').src = src;
             document.getElementById('footerLogoImg').src = src;
             document.getElementById('adminHeaderLogo').src = src;
-            showFlash('Logo Portal berhasil diperbarui secara dinamis!');
+            const preview = document.getElementById('modalPreviewLogoImg');
+            if (preview) preview.src = src;
+            const fav = document.getElementById('dynamicFavicon');
+            if (fav) fav.href = src;
         }
 
-        function changeAdminPass(e) {
+        async function changeAdminPass(e) {
             e.preventDefault();
             const p = document.getElementById('new_admin_pass').value;
             localStorage.setItem('ummu_admin_pass', p);
             closeModal('passModal');
-            showFlash('Password Administrator berhasil diperbarui!');
-        }
-
-        function printSingleWifiCard() {
-            const content = document.getElementById('printableSingleCard').innerHTML;
-            const w = window.open('', '', 'width=600,height=450');
-            w.document.write(`<html><head><title>Kartu Akun WiFi UMMU</title></head><body style="font-family:Arial,sans-serif;padding:30px;border:2px dashed #1e3a8a;border-radius:16px">
-                <h2 style="color:#1e3a8a;margin-top:0">KARTU KREDENSIAL HOTSPOT UMMU</h2>${content}</body></html>`);
-            w.document.close();
-            setTimeout(() => w.print(), 300);
+            showFlash('Password Administrator berhasil diperbarui dan disimpan ke Google Sheets!');
+            await postToGoogleSheets({ action: 'change_password', admin_pass: p });
         }
 
         function downloadTextFile(filename, text) {
@@ -1435,7 +1496,7 @@
         // INIT SAAT HALAMAN DIMUAT
         document.addEventListener('DOMContentLoaded', () => {
             const savedLogo = localStorage.getItem('ummu_logo');
-            if (savedLogo) applyLogo(savedLogo);
+            if (savedLogo) applyLogoToDOM(savedLogo);
             document.getElementById('gs_script_url').value = GOOGLE_SCRIPT_URL;
             renderAll();
             if (isAdminLoggedIn) switchView('admin');
