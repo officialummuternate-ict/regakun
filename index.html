@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pusat Akses Layanan Aplikasi Web & Hotspot - UMMU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-nav { background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(14px); }
+        .hero-pattern {
+            background-color: #020617;
+            background-image: radial-gradient(at 20% 25%, hsla(222,84%,35%,0.45) 0px, transparent 55%),
+                              radial-gradient(at 80% 75%, hsla(245,75%,38%,0.35) 0px, transparent 55%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+    <!-- NAVBAR UTAMA -->
+    <header class="glass-nav text-white sticky top-0 z-50 border-b border-slate-800/80 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+            <a href="#" onclick="switchView('user'); return false;" class="flex items-center space-x-3.5 group">
+                <div class="w-11 h-11 rounded-2xl bg-white flex items-center justify-center p-1 shadow-lg border border-white/20 overflow-hidden shrink-0 group-hover:scale-105 transition">
+                    <img id="navLogoImg" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UMMU" alt="Logo UMMU" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-base sm:text-lg font-extrabold tracking-tight leading-none">PORTAL DIGITAL UMMU</span>
+                        <span class="hidden md:inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-400/20">Official</span>
+                    </div>
+                    <span class="text-[11px] text-slate-300 font-medium block mt-0.5">Universitas Muhammadiyah Maluku Utara</span>
+                </div>
+            </a>
+
+            <nav id="publicNavLinks" class="hidden lg:flex items-center space-x-7 text-xs font-bold uppercase tracking-wider text-slate-300">
+                <a href="#katalog-aplikasi" class="hover:text-white transition">Direktori Aplikasi</a>
+                <a href="#layanan-wifi" class="hover:text-white transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Registrasi WiFi
+                </a>
+                <button onclick="openModal('checkWifiModal')" class="hover:text-white transition uppercase flex items-center gap-1.5 text-cyan-300">
+                    <i class="fas fa-satellite-dish"></i> Cek Status Live MikroTik/RADIUS
+                </button>
+                <button onclick="openModal('qrModal')" class="hover:text-white transition uppercase">Reset Sandi WiFi</button>
+            </nav>
+
+            <!-- TOMBOL KANAN NAVBAR -->
+            <div class="flex items-center gap-2.5">
+                <!-- Saat Belum Login Admin -->
+                <div id="guestNavActions" class="flex items-center gap-2.5">
+                    <button onclick="openWifiRegModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/25 transition flex items-center gap-2">
+                        <i class="fas fa-wifi"></i> <span>Daftar WiFi</span>
+                    </button>
+                    <button onclick="openModal('loginModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-2">
+                        <i class="fas fa-user-shield text-blue-400"></i> <span class="hidden sm:inline">Admin</span>
+                    </button>
+                </div>
+
+                <!-- Saat Sudah Login Admin -->
+                <div id="adminNavActions" class="hidden items-center gap-2.5">
+                    <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700">
+                        <button id="btnViewUser" onclick="switchView('user')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
+                            <i class="fas fa-eye mr-1"></i> Publik
+                        </button>
+                        <button id="btnViewAdmin" onclick="switchView('admin')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow">
+                            <i class="fas fa-sliders-h mr-1"></i> Admin
+                        </button>
+                    </div>
+                    <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow">
+                        <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFIKASI FLASH MESSAGE -->
+    <div id="flashContainer" class="max-w-7xl mx-auto px-4 sm:px-6 mt-6 w-full hidden"></div>
+
+    <!-- KARTU VOUCHER WIFI OTOMATIS SETELAH PENDAFTARAN BERHASIL -->
+    <div id="voucherCardContainer" class="max-w-3xl mx-auto px-4 sm:px-6 mt-6 w-full hidden"></div>
+
+    <!-- ========================================================= -->
+    <!-- SISI USER / PUBLIK (PORTAL PROFESIONAL + LAYANAN WIFI)    -->
+    <!-- ========================================================= -->
+    <div id="userViewSection" class="flex-1 flex flex-col">
+        <section class="hero-pattern text-white pt-16 pb-24 lg:pt-20 lg:pb-28 relative overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+                <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md text-blue-200 text-xs font-bold mb-6">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Single Sign-On & Ekosistem Layanan Digital UMMU Ternate
+                </div>
+                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight mb-5">
+                    Pusat Akses Layanan <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-300">Aplikasi Web & Hotspot UMMU</span>
+                </h1>
+                <p class="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed mb-9">
+                    Gerbang informasi terpadu Universitas Muhammadiyah Maluku Utara. Akses seluruh sistem akademik, perpustakaan, jurnal, pembayaran, hingga layanan mandiri pendaftaran & pengecekan status akun WiFi kampus.
+                </p>
+
+                <!-- Pencarian Cepat Aplikasi -->
+                <div class="max-w-2xl mx-auto relative mb-8">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="userSearch" oninput="renderPublicApps()" placeholder="Ketik nama aplikasi atau layanan (misal: SIAKAD, WiFi, PMB, Pembayaran, Jurnal)..." 
+                           class="w-full pl-12 pr-36 py-4 rounded-2xl bg-white text-slate-900 text-xs sm:text-sm font-semibold shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/40">
+                    <a href="#layanan-wifi" class="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl items-center gap-1.5 transition">
+                        <i class="fas fa-wifi"></i> Hotspot UMMU
+                    </a>
+                </div>
+
+                <!-- Bar Pintasan Cepat -->
+                <div class="flex flex-wrap justify-center gap-3 text-xs font-bold">
+                    <button onclick="openWifiRegModal()" class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition flex items-center gap-2">
+                        <i class="fas fa-user-plus"></i> Registrasi Mandiri WiFi Kampus
+                    </button>
+                    <button onclick="openModal('checkWifiModal')" class="px-5 py-3 rounded-xl bg-cyan-600/90 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-600/25 transition flex items-center gap-2">
+                        <i class="fas fa-satellite-dish"></i> Cek Status Akun di MikroTik / RADIUS
+                    </button>
+                    <button onclick="openModal('qrModal')" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white backdrop-blur-sm transition flex items-center gap-2">
+                        <i class="fas fa-qrcode text-amber-300"></i> QR Reset Password WiFi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- KATALOG DIREKTORI APLIKASI WEB UMMU -->
+        <main id="katalog-aplikasi" class="max-w-7xl mx-auto px-4 sm:px-6 py-14 flex-1 w-full">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                <div>
+                    <span class="text-[11px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">Direktori Sistem Informasi</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Katalog Aplikasi Web UMMU</h2>
+                </div>
+                <div class="flex flex-wrap gap-2" id="categoryButtons"></div>
+            </div>
+
+            <div id="userAppGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </main>
+
+        <!-- SEKSI LAYANAN REGISTRASI & CEK STATUS HOTSPOT WIFI UMMU -->
+        <section id="layanan-wifi" class="py-16 bg-white border-t border-slate-200/80">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                        <div class="lg:col-span-7 space-y-4">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider">
+                                <i class="fas fa-broadcast-tower"></i> Terintegrasi Database Cloud Google Sheets & MikroTik/RADIUS
+                            </div>
+                            <h2 class="text-2xl sm:text-4xl font-extrabold leading-tight">
+                                Layanan Mandiri & Cek Status Akun WiFi Kampus UMMU
+                            </h2>
+                            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                                Periksa apakah NIM / NIDN / NIP Anda sudah terdaftar dan aktif di database Hotspot kampus secara *real-time*, atau lakukan pendaftaran mandiri jika belum terdaftar.
+                            </p>
+                            <div class="flex flex-wrap gap-3 pt-4">
+                                <button onclick="openModal('checkWifiModal')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs px-6 py-3.5 rounded-xl shadow-lg transition flex items-center gap-2">
+                                    <i class="fas fa-satellite-dish"></i> Cek Status Akun di MikroTik / RADIUS
+                                </button>
+                                <button onclick="openWifiRegModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-6 py-3.5 rounded-xl shadow-lg transition flex items-center gap-2">
+                                    <i class="fas fa-user-plus"></i> Daftar Akun WiFi Baru
+                                </button>
+                                <a href="https://bitdregis.ummu.ac.id/" target="_blank" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-5 py-3.5 rounded-xl border border-white/15 transition flex items-center gap-2">
+                                    <i class="fas fa-external-link-alt"></i> Portal bitdregis.ummu.ac.id
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-5 flex justify-center">
+                            <div class="bg-white text-slate-800 p-6 rounded-3xl shadow-2xl max-w-xs w-full text-center">
+                                <span class="text-[10px] font-extrabold uppercase tracking-widest bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200">Lupa Password WiFi?</span>
+                                <h4 class="text-base font-extrabold text-slate-900 mt-2">Scan QR Reset Password</h4>
+                                <p class="text-[11px] text-slate-500 mt-1 mb-4">Arahkan kamera HP Anda untuk mereset sandi WiFi di portal BITD.</p>
+                                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 inline-block mb-3">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://bitdregis.ummu.ac.id/forgot-password" alt="QR Reset WiFi" class="w-36 h-36 mx-auto rounded-lg">
+                                </div>
+                                <a href="https://bitdregis.ummu.ac.id/forgot-password" target="_blank" class="block w-full bg-slate-900 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl transition">
+                                    Reset via Browser <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- SISI ADMINISTRATOR (MANAJEMEN WEB, LOGO, WIFI, & SHEETS)  -->
+    <!-- ========================================================= -->
+    <main id="adminViewSection" class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full hidden">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-slate-900 p-2 flex items-center justify-center shrink-0">
+                    <img id="adminHeaderLogo" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UMMU" alt="Logo" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">Panel Kendali Terpusat BITD</span>
+                        <span id="dbStatusBadge" class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <i class="fas fa-table mr-1"></i> Google Sheets Ready
+                        </span>
+                    </div>
+                    <h1 class="text-2xl font-extrabold text-slate-900 mt-1">Dashboard Administrator Portal UMMU</h1>
+                    <p class="text-xs text-slate-500">Kelola aplikasi web, logo dinamis, member WiFi, filter tanggal, serta koneksi Google Sheets.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="openAppModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold px-4 py-3 rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fas fa-plus-circle"></i> + Aplikasi Web
+                </button>
+                <button onclick="openWifiRegModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-3 rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fas fa-user-plus"></i> + Akun WiFi
+                </button>
+                <button onclick="openModal('gsConfigModal')" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-extrabold px-4 py-3 rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fas fa-cloud"></i> Koneksi Google Sheets / Server
+                </button>
+                <button onclick="openModal('logoModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold px-4 py-3 rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fas fa-image"></i> Ganti Logo
+                </button>
+                <button onclick="openModal('passModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3.5 py-3 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fas fa-key text-amber-500"></i> Sandi
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigasi Tab Admin -->
+        <div class="flex border-b border-slate-200 mb-6 gap-2">
+            <button id="tabBtnApps" onclick="switchAdminTab('apps')" class="px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-blue-600 text-blue-600 bg-white">
+                <i class="fas fa-th-large"></i> Direktori Aplikasi Web (<span id="countAdminApps">0</span>)
+            </button>
+            <button id="tabBtnWifi" onclick="switchAdminTab('wifi')" class="px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-800">
+                <i class="fas fa-wifi"></i> Data Registrasi WiFi & Integrasi MikroTik/RADIUS (<span id="countAdminWifi">0</span>)
+            </button>
+        </div>
+
+        <!-- TAB 1: TABEL CRUD APLIKASI WEB -->
+        <div id="adminTabAppsContent" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                            <th class="py-4 px-5">Urutan</th>
+                            <th class="py-4 px-5">Nama Aplikasi & URL</th>
+                            <th class="py-4 px-5">Kategori</th>
+                            <th class="py-4 px-5">Badge</th>
+                            <th class="py-4 px-5 text-center">Status Tampil</th>
+                            <th class="py-4 px-5 text-center">Aksi Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminAppsTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: DATA REGISTRASI WIFI + FILTER PERTANGGAL + EXPORT -->
+        <div id="adminTabWifiContent" class="hidden space-y-6">
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="openWifiRegModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fas fa-user-plus"></i> Tambah Manual
+                        </button>
+                        <label class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer transition flex items-center gap-1.5">
+                            <i class="fas fa-file-import"></i> Import Excel (.xlsx)
+                            <input type="file" id="importWifiExcel" class="hidden" accept=".xlsx, .xls, .csv" onchange="handleWifiExcelImport(event)">
+                        </label>
+                        <button onclick="downloadWifiTemplate()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fas fa-download"></i> Template Excel
+                        </button>
+                        <button onclick="openModal('checkWifiModal')" class="bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-xs font-extrabold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fas fa-satellite-dish"></i> Test Cek Live MikroTik/RADIUS
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportWifiExcel()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-extrabold px-3.5 py-2.5 rounded-xl transition">
+                            <i class="fas fa-file-excel mr-1"></i> Export Excel
+                        </button>
+                        <button onclick="exportMikrotikRsc()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-extrabold px-3.5 py-2.5 rounded-xl transition">
+                            <i class="fas fa-network-wired mr-1"></i> MikroTik .rsc
+                        </button>
+                        <button onclick="exportRadiusSql()" class="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-extrabold px-3.5 py-2.5 rounded-xl transition">
+                            <i class="fas fa-database mr-1"></i> RADIUS .sql
+                        </button>
+                        <button onclick="printAllWifiVouchers()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-extrabold px-3.5 py-2.5 rounded-xl transition">
+                            <i class="fas fa-print mr-1"></i> Cetak Kartu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BARIS FILTER TANGGAL, TIPE SIVITAS & PENCARIAN -->
+                <div class="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Mulai Tgl Daftar</label>
+                        <input type="date" id="wifiFilterStart" onchange="renderAdminWifiTable()" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Sampai Tgl Daftar</label>
+                        <input type="date" id="wifiFilterEnd" onchange="renderAdminWifiTable()" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Tipe Sivitas</label>
+                        <select id="wifiFilterType" onchange="renderAdminWifiTable()" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">Semua Tipe</option>
+                            <option value="student">Mahasiswa (5M)</option>
+                            <option value="lecturer">Dosen (15M)</option>
+                            <option value="employee">Pegawai (10M)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Cari NIM / Nama / Email</label>
+                        <input type="text" id="wifiFilterSearch" oninput="renderAdminWifiTable()" placeholder="Ketik kata kunci..." class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="resetWifiFilter()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5">
+                            <i class="fas fa-sync-alt"></i> Reset Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                                <th class="py-4 px-5">NIM / NIDN / NIP</th>
+                                <th class="py-4 px-5">Nama Lengkap & Email</th>
+                                <th class="py-4 px-5">Tipe Sivitas</th>
+                                <th class="py-4 px-5">Fakultas/Prodi / Unit Kerja</th>
+                                <th class="py-4 px-5">Tgl Daftar</th>
+                                <th class="py-4 px-5 text-center">Status</th>
+                                <th class="py-4 px-5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminWifiTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                    </table>
+                </div>
+                <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+                    <span>Menampilkan: <strong id="wifiFilteredCount" class="text-slate-900">0</strong> data terfilter</span>
+                    <span>Total Keseluruhan: <strong id="wifiTotalCount" class="text-slate-900">0</strong> data</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-800 text-xs mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center overflow-hidden p-1">
+                    <img id="footerLogoImg" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=UMMU" alt="Logo Footer" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <span class="font-bold text-white block">Universitas Muhammadiyah Maluku Utara (UMMU)</span>
+                    <span class="text-[11px] text-slate-500">Pusat Layanan Digital & Hotspot • Biro Informasi Teknologi & Data (BITD)</span>
+                </div>
+            </div>
+            <div>&copy; 2026 UMMU Ternate. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <!-- ========================================================= -->
+    <!-- MODAL CEK STATUS AKUN WIFI                                -->
+    <!-- ========================================================= -->
+    <div id="checkWifiModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden my-8">
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-cyan-950 p-6 text-white flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 flex items-center justify-center text-lg">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold">Cek Status Akun WiFi (Live Database)</h3>
+                        <p class="text-[11px] text-cyan-200">Verifikasi ke Database Google Sheets, MikroTik & FreeRADIUS</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('checkWifiModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <div class="flex gap-2">
+                    <input type="text" id="check_wifi_input" onkeydown="if(event.key==='Enter') checkWifiAccount()" placeholder="Masukkan NIM / NIDN / NIP Anda..." class="flex-1 border border-slate-200 rounded-xl p-3.5 font-extrabold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="checkWifiAccount()" class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-6 rounded-xl shadow flex items-center gap-2">
+                        <i class="fas fa-search"></i> Cek Live
+                    </button>
+                </div>
+                <div id="check_wifi_result" class="hidden space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL REGISTRASI MANDIRI / TAMBAH AKUN WIFI KAMPUS        -->
+    <!-- ========================================================= -->
+    <div id="wifiRegModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden my-8">
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 text-white flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 flex items-center justify-center text-lg">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <div>
+                        <h3 id="wifiModalTitle" class="text-base sm:text-lg font-extrabold">Registrasi Akun WiFi Kampus UMMU</h3>
+                        <p class="text-[11px] text-blue-200">Pendaftaran akses internet Hotspot Mahasiswa, Dosen & Pegawai</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('wifiRegModal')" class="text-slate-300 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <form onsubmit="submitWifiRegistration(event)" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="wifi_is_edit" value="0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">NIM / NIDN / NIP *</label>
+                        <input type="text" id="wifi_id" required placeholder="Contoh: 1210555201..." class="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Nama Lengkap *</label>
+                        <input type="text" id="wifi_name" required placeholder="Nama Lengkap Sesuai KTM/KTP" class="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Tanggal Lahir *</label>
+                        <input type="date" id="wifi_birth" required class="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Tipe Sivitas *</label>
+                        <select id="wifi_type" required onchange="toggleWifiUnitFields()" class="w-full border border-slate-200 rounded-xl p-3 font-semibold focus:ring-2 focus:ring-blue-500">
+                            <option value="student">Mahasiswa (Limit 5M)</option>
+                            <option value="lecturer">Dosen (Limit 15M)</option>
+                            <option value="employee">Pegawai / Staf (Limit 10M)</option>
+                        </select>
+                    </div>
+                    <div id="wifi_faculty_wrap">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Fakultas *</label>
+                        <input type="text" id="wifi_faculty" placeholder="Contoh: Teknik" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div id="wifi_dept_wrap">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Program Studi *</label>
+                        <input type="text" id="wifi_dept" placeholder="Contoh: Informatika" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div id="wifi_unit_wrap" class="hidden sm:col-span-2">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Unit Kerja (Biro / Lembaga) *</label>
+                        <input type="text" id="wifi_unit" placeholder="Contoh: Biro Informasi Teknologi & Data (BITD)" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Email Aktif (@gmail.com) *</label>
+                        <input type="email" id="wifi_email" required placeholder="nama@gmail.com" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">No. WhatsApp / HP</label>
+                        <input type="text" id="wifi_phone" placeholder="0812xxxx" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div class="sm:col-span-2 hidden" id="wifi_status_wrap">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Status Akun Hotspot</label>
+                        <select id="wifi_status" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                            <option value="active">Aktif (Diizinkan Login)</option>
+                            <option value="inactive">Nonaktif (Dibekukan)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('wifiRegModal')" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Batal</button>
+                    <button type="submit" id="btnSubmitWifi" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg">
+                        <i class="fas fa-check-circle mr-1"></i> Simpan & Aktifkan Akun WiFi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIGURASI GOOGLE SHEETS URL -->
+    <div id="gsConfigModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-extrabold"><i class="fas fa-table text-emerald-400 mr-2"></i>Konfigurasi Database Google Sheets</h3>
+                    <p class="text-xs text-slate-400">Hubungkan halaman GitHub Pages ini langsung ke Google Sheets Web App</p>
+                </div>
+                <button onclick="closeModal('gsConfigModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <form onsubmit="saveGsConfig(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-extrabold uppercase text-slate-600 mb-1">URL Web App Google Apps Script (Berakhiran /exec)</label>
+                    <input type="url" id="gs_script_url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    <p class="text-[11px] text-slate-500 mt-1.5">Jika dikosongkan, sistem otomatis menyimpan perubahan di penyimpanan browser lokal sekaligus siap disinkronkan kapan saja.</p>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('gsConfigModal')" class="px-5 py-3 rounded-xl bg-slate-100 font-bold">Batal</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow">Simpan & Sinkronkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-extrabold">Login Administrator</h3>
+                    <p class="text-xs text-slate-400">Default: admin / adminummu2026</p>
+                </div>
+                <button onclick="closeModal('loginModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <form onsubmit="handleAdminLogin(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1">Username</label>
+                    <input type="text" id="login_user" required placeholder="admin" class="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1">Password</label>
+                    <input type="password" id="login_pass" required placeholder="••••••••" class="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-lg transition">
+                    Masuk ke Panel Admin
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH / EDIT APLIKASI WEB -->
+    <div id="appModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden my-8">
+            <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                <h3 id="appModalTitle" class="text-lg font-extrabold">Tambah Aplikasi Web Baru</h3>
+                <button onclick="closeModal('appModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <form onsubmit="saveAppForm(event)" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="form_app_id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Nama Aplikasi Web *</label>
+                        <input type="text" id="form_name" required class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">URL / Link Tujuan *</label>
+                        <input type="url" id="form_url" required class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Kategori Layanan *</label>
+                        <input type="text" id="form_category" required class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Label Badge</label>
+                        <input type="text" id="form_badge" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Ikon FontAwesome</label>
+                        <select id="form_icon" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                            <option value="fa-wifi">WiFi / Hotspot (fa-wifi)</option>
+                            <option value="fa-globe">Globe / Web (fa-globe)</option>
+                            <option value="fa-university">Kampus / Universitas (fa-university)</option>
+                            <option value="fa-graduation-cap">Akademik / SIAKAD (fa-graduation-cap)</option>
+                            <option value="fa-network-wired">Jaringan / IT BITD (fa-network-wired)</option>
+                            <option value="fa-user-plus">Pendaftaran / PMB (fa-user-plus)</option>
+                            <option value="fa-book-reader">Pustaka / Repositori (fa-book-reader)</option>
+                            <option value="fa-journal-whills">Jurnal Ilmiah (fa-journal-whills)</option>
+                            <option value="fa-book">Perpustakaan (fa-book)</option>
+                            <option value="fa-credit-card">Pembayaran / Keuangan (fa-credit-card)</option>
+                            <option value="fa-clipboard-check">Registrasi / Verifikasi (fa-clipboard-check)</option>
+                            <option value="fa-users-cog">Kemahasiswaan / P2KK (fa-users-cog)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Tema Warna Kartu</label>
+                        <select id="form_color" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                            <option value="blue">Biru UMMU (Blue)</option>
+                            <option value="indigo">Indigo Modern</option>
+                            <option value="emerald">Hijau (Emerald)</option>
+                            <option value="amber">Kuning Emas (Amber)</option>
+                            <option value="purple">Ungu (Purple)</option>
+                            <option value="teal">Toska (Teal)</option>
+                            <option value="rose">Merah Muda (Rose)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Nomor Urut Tampil</label>
+                        <input type="number" id="form_sort" value="10" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                    </div>
+                    <div class="flex items-center pt-5">
+                        <label class="inline-flex items-center gap-2 cursor-pointer font-extrabold text-slate-700">
+                            <input type="checkbox" id="form_active" checked class="w-4 h-4 rounded text-blue-600">
+                            <span>Tampilkan ke Publik (User)</span>
+                        </label>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-extrabold uppercase text-slate-600 mb-1">Deskripsi Singkat *</label>
+                        <textarea id="form_description" rows="3" required class="w-full border border-slate-200 rounded-xl p-3 font-semibold"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('appModal')" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">Batal</button>
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow-lg">Simpan Aplikasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL GANTI LOGO PORTAL DINAMIS -->
+    <div id="logoModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-extrabold">Ganti Logo Portal Dinamis</h3>
+                    <p class="text-xs text-slate-400">Unggah file gambar logo atau masukkan URL</p>
+                </div>
+                <button onclick="closeModal('logoModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <form onsubmit="updatePortalLogo(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Upload File Logo (PNG/JPG/SVG/WEBP)</label>
+                    <input type="file" id="logo_file_input" accept="image/*" class="w-full border border-slate-200 rounded-xl p-2 bg-slate-50">
+                </div>
+                <div>
+                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Atau Masukkan URL Logo</label>
+                    <input type="url" id="logo_url_input" placeholder="https://www.ummu.ac.id/logo.png" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl uppercase tracking-wider shadow transition">
+                    Simpan Perubahan Logo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL UBAH PASSWORD ADMIN -->
+    <div id="passModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 p-5 text-white flex justify-between items-center">
+                <h3 class="text-base font-extrabold">Ubah Password Admin</h3>
+                <button onclick="closeModal('passModal')" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="changeAdminPass(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-extrabold uppercase text-slate-600 mb-1">Password Baru (Min. 6 Karakter)</label>
+                    <input type="password" id="new_admin_pass" required minlength="6" class="w-full border border-slate-200 rounded-xl p-3 font-semibold">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 rounded-xl shadow">Simpan Password Baru</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL QR RESET WIFI -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-900">QR Reset Password WiFi UMMU</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-5">Pindai kode QR ini menggunakan kamera HP untuk memulihkan akun Hotspot sivitas akademika UMMU.</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://bitdregis.ummu.ac.id/forgot-password" alt="QR WiFi UMMU" class="w-44 h-44 mx-auto rounded-2xl border p-2 mb-4 shadow-sm">
+            <a href="https://bitdregis.ummu.ac.id/forgot-password" target="_blank" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs mb-2">Buka Link Reset Password</a>
+            <button onclick="closeModal('qrModal')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI (Atau lewat tombol Admin)
+        // =========================================================================
+        let GOOGLE_SCRIPT_URL = localStorage.getItem('ummu_gs_url') || 'https://script.google.com/macros/s/AKfycbxHrIw5m6yXo1L3Kkl5cYGfVlIgAcwAc0fHXZGkiVT0QbvfkESBqM_Wk9utb1Ewubya/exec';
+
+        const colorMap = {
+            blue:    { header: 'from-blue-900 to-blue-600', icon: 'bg-blue-50 text-blue-600 border-blue-100', badge: 'bg-blue-50 text-blue-700 border-blue-200', btn: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20' },
+            indigo:  { header: 'from-indigo-900 to-indigo-600', icon: 'bg-indigo-50 text-indigo-600 border-indigo-100', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200', btn: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20' },
+            emerald: { header: 'from-emerald-900 to-emerald-600', icon: 'bg-emerald-50 text-emerald-600 border-emerald-100', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', btn: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' },
+            amber:   { header: 'from-amber-800 to-amber-500', icon: 'bg-amber-50 text-amber-600 border-amber-100', badge: 'bg-amber-50 text-amber-700 border-amber-200', btn: 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' },
+            purple:  { header: 'from-purple-900 to-purple-600', icon: 'bg-purple-50 text-purple-600 border-purple-100', badge: 'bg-purple-50 text-purple-700 border-purple-200', btn: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/20' },
+            teal:    { header: 'from-teal-900 to-teal-600', icon: 'bg-teal-50 text-teal-600 border-teal-100', badge: 'bg-teal-50 text-teal-700 border-teal-200', btn: 'bg-teal-600 hover:bg-teal-700 shadow-teal-600/20' },
+            rose:    { header: 'from-rose-900 to-rose-600', icon: 'bg-rose-50 text-rose-600 border-rose-100', badge: 'bg-rose-50 text-rose-700 border-rose-200', btn: 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20' }
+        };
+
+        const defaultApps = [
+            { id: 1, name: 'Layanan Registrasi WiFi UMMU', category: 'Teknologi & Infrastruktur', url: 'https://bitdregis.ummu.ac.id/', description: 'Portal pendaftaran mandiri akun internet Hotspot sivitas akademika (Mahasiswa, Dosen, & Pegawai) serta layanan reset password WiFi.', icon: 'fa-wifi', color: 'indigo', badge: 'HOTSPOT KAMPUS', is_active: 1, sort_order: 1 },
+            { id: 2, name: 'Website Resmi UMMU', category: 'Utama & Profil', url: 'https://www.ummu.ac.id/fr', description: 'Portal berita utama, profil institusi, informasi fakultas, dan pengumuman resmi Universitas Muhammadiyah Maluku Utara.', icon: 'fa-university', color: 'blue', badge: 'PORTAL UTAMA', is_active: 1, sort_order: 2 },
+            { id: 3, name: 'Biro Informasi Teknologi & Data (BITD)', category: 'Teknologi & Infrastruktur', url: 'https://bitd.ummu.ac.id/', description: 'Pusat layanan teknologi informasi, pengelolaan jaringan kampus, pengembangan sistem, dan infrastruktur digital UMMU.', icon: 'fa-network-wired', color: 'indigo', badge: 'PUSAT IT', is_active: 1, sort_order: 3 },
+            { id: 4, name: 'Admisi & PMB UMMU', category: 'Pendaftaran & Registrasi', url: 'https://admisi.ummu.ac.id/', description: 'Portal Penerimaan Mahasiswa Baru (PMB), informasi jalur seleksi, pendaftaran online, dan pengumuman kelulusan.', icon: 'fa-user-plus', color: 'emerald', badge: 'PMB ONLINE', is_active: 1, sort_order: 4 },
+            { id: 5, name: 'Portal Akademik (SIAKAD)', category: 'Akademik & Kemahasiswaan', url: 'https://portal.ummu.ac.id/', description: 'Sistem Informasi Akademik terpadu untuk pengisian KRS, KHS, jadwal perkuliahan, dan layanan dosen serta mahasiswa.', icon: 'fa-graduation-cap', color: 'blue', badge: 'SIAKAD', is_active: 1, sort_order: 5 },
+            { id: 6, name: 'Pustaka & Repositori UMMU', category: 'Perpustakaan & Jurnal', url: 'https://www.pustaka.ummu.ac.id/', description: 'Repositori digital karya ilmiah, skripsi, tesis, dan publikasi akademik sivitas Universitas Muhammadiyah Maluku Utara.', icon: 'fa-book-reader', color: 'amber', badge: 'REPOSITORI', is_active: 1, sort_order: 6 },
+            { id: 7, name: 'Portal E-Jurnal Ilmiah UMMU', category: 'Perpustakaan & Jurnal', url: 'https://jurnal.ummu.ac.id/index.php/index/en/index', description: 'Open Journal Systems (OJS) yang memuat berbagai publikasi jurnal penelitian ilmiah dari seluruh fakultas dan prodi di UMMU.', icon: 'fa-journal-whills', color: 'purple', badge: 'OJS JURNAL', is_active: 1, sort_order: 7 },
+            { id: 8, name: 'Sistem Informasi Perpustakaan', category: 'Perpustakaan & Jurnal', url: 'https://perpustakaan.ummu.ac.id/index.php', description: 'Katalog pencarian buku (OPAC), layanan sirkulasi peminjaman, keanggotaan, dan fasilitas perpustakaan kampus UMMU.', icon: 'fa-book', color: 'teal', badge: 'E-LIBRARY', is_active: 1, sort_order: 8 },
+            { id: 9, name: 'P2KK UMMU', category: 'Akademik & Kemahasiswaan', url: 'https://p2kk.ummu.ac.id/', description: 'Program Pengembangan Kepribadian dan Kepemimpinan, pelatihan soft-skill, serta pembinaan karakter mahasiswa UMMU.', icon: 'fa-users-cog', color: 'rose', badge: 'KEMAHASISWAAN', is_active: 1, sort_order: 9 },
+            { id: 10, name: 'Sistem Informasi Pembayaran', category: 'Keuangan & Pembayaran', url: 'https://pembayaran.ummu.ac.id/', description: 'Portal layanan pembayaran biaya pendidikan, cek tagihan UKT/SPP, dan riwayat transaksi keuangan mahasiswa.', icon: 'fa-credit-card', color: 'emerald', badge: 'KEUANGAN', is_active: 1, sort_order: 10 },
+            { id: 11, name: 'Sistem Registrasi UMMU', category: 'Pendaftaran & Registrasi', url: 'https://registrasi.ummu.ac.id/', description: 'Layanan registrasi ulang mahasiswa, validasi status aktif akademik, serta pengajuan administrasi sivitas.', icon: 'fa-clipboard-check', color: 'indigo', badge: 'REGISTRASI', is_active: 1, sort_order: 11 }
+        ];
+
+        const defaultWifiMembers = [
+            { identity_number: '121055520123061', name: 'KLARA SIBU', birth_date: '2004-03-12', email: 'klarasibu2@gmail.com', phone: '08123456701', type: 'student', faculty: 'Teknik', department: 'Informatika', status: 'active', input_date: '2026-10-27' },
+            { identity_number: '121055520124021', name: 'ZELDA SITTI ROSNADILA ADIHARDJA', birth_date: '2004-07-19', email: 'zeldaadj@gmail.com', phone: '08123456702', type: 'student', faculty: 'Teknik', department: 'Informatika', status: 'active', input_date: '2026-10-26' },
+            { identity_number: '121056220126033', name: 'LESTARI KUDOTI', birth_date: '2003-11-05', email: 'lestarikudoti@gmail.com', phone: '08123456703', type: 'student', faculty: 'EKONOMI', department: 'AKUNTANSI', status: 'active', input_date: '2026-10-26' },
+            { identity_number: '121056220126035', name: 'LESTARI MUSA', birth_date: '2003-08-21', email: 'lestariimusa@gmail.com', phone: '08123456704', type: 'student', faculty: 'EKONOMI', department: 'AKUNTANSI', status: 'active', input_date: '2026-10-26' },
+            { identity_number: '121051320125079', name: 'DIVANA ILHAM', birth_date: '2004-01-15', email: 'difaaadif9@gmail.com', phone: '08123456705', type: 'student', faculty: 'FIKES', department: 'KESMAS', status: 'active', input_date: '2026-10-26' }
+        ];
+
+        let appsData = JSON.parse(localStorage.getItem('ummu_apps')) || defaultApps;
+        let wifiMembersData = JSON.parse(localStorage.getItem('ummu_wifi')) || defaultWifiMembers;
+        let selectedCategory = 'all';
+        let isAdminLoggedIn = sessionStorage.getItem('ummu_admin_login') === '1';
+
+        function saveLocalCache() {
+            localStorage.setItem('ummu_apps', JSON.stringify(appsData));
+            localStorage.setItem('ummu_wifi', JSON.stringify(wifiMembersData));
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showFlash(msg, type = 'success') {
+            const box = document.getElementById('flashContainer');
+            box.classList.remove('hidden');
+            box.innerHTML = `
+                <div class="p-4 rounded-2xl border flex items-center justify-between shadow-sm ${type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}">
+                    <div class="flex items-center gap-3 text-xs sm:text-sm font-bold">
+                        <i class="fas ${type === 'error' ? 'fa-exclamation-triangle text-rose-600' : 'fa-check-circle text-emerald-600'} text-lg"></i>
+                        <span>${msg}</span>
+                    </div>
+                    <button onclick="document.getElementById('flashContainer').classList.add('hidden')" class="text-xs opacity-60 hover:opacity-100"><i class="fas fa-times"></i></button>
+                </div>`;
+        }
+
+        // SINKRONISASI DARI GOOGLE SHEETS SAAT HALAMAN DIBUKA
+        async function loadFromGoogleSheets() {
+            const badge = document.getElementById('dbStatusBadge');
+            if (!GOOGLE_SCRIPT_URL) {
+                if (badge) badge.innerHTML = `<i class="fas fa-hdd mr-1"></i> Mode Penyimpanan Lokal (Klik Koneksi Google Sheets)`;
+                return;
+            }
+            try {
+                if (badge) badge.innerHTML = `<i class="fas fa-sync fa-spin mr-1"></i> Sinkronisasi Google Sheets...`;
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=init`);
+                const json = await res.json();
+                if (json.status === 'success') {
+                    if (Array.isArray(json.apps) && json.apps.length) appsData = json.apps;
+                    if (Array.isArray(json.wifiMembers)) wifiMembersData = json.wifiMembers;
+                    saveLocalCache();
+                    renderAll();
+                    if (badge) badge.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Terhubung ke Google Sheets`;
+                }
+            } catch (e) {
+                console.warn('Menggunakan cache lokal:', e);
+            }
+        }
+
+        async function postToGoogleSheets(payload) {
+            if (!GOOGLE_SCRIPT_URL) return null;
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                return await res.json();
+            } catch (e) {
+                console.warn('Sinkronisasi background gagal:', e);
+                return null;
+            }
+        }
+
+        // RENDER DIREKTORI APLIKASI PUBLIK
+        function renderPublicCategories() {
+            const activeApps = appsData.filter(a => Number(a.is_active) === 1);
+            const cats = [...new Set(activeApps.map(a => a.category))].sort();
+            const container = document.getElementById('categoryButtons');
+            let html = `<button onclick="setCategory('all')" class="${selectedCategory === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'} text-xs font-bold px-4 py-2.5 rounded-xl transition">Semua Layanan (${activeApps.length})</button>`;
+            cats.forEach(c => {
+                const active = selectedCategory === c;
+                html += `<button onclick="setCategory('${c.replace(/'/g, "\\'")}')" class="${active ? 'bg-blue-600 text-white shadow-sm' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'} text-xs font-bold px-4 py-2.5 rounded-xl transition">${c}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function setCategory(cat) {
+            selectedCategory = cat;
+            renderPublicCategories();
+            renderPublicApps();
+        }
+
+        function renderPublicApps() {
+            const query = (document.getElementById('userSearch')?.value || '').toLowerCase().trim();
+            const grid = document.getElementById('userAppGrid');
+            const activeApps = appsData
+                .filter(a => Number(a.is_active) === 1)
+                .sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+
+            const filtered = activeApps.filter(app => {
+                const matchCat = selectedCategory === 'all' || app.category === selectedCategory;
+                const str = `${app.name} ${app.description} ${app.badge} ${app.category}`.toLowerCase();
+                return matchCat && (!query || str.includes(query));
+            });
+
+            grid.innerHTML = filtered.map(app => {
+                const theme = colorMap[app.color] || colorMap.blue;
+                let host = app.url;
+                try { host = new URL(app.url).hostname; } catch (e) {}
+                return `
+                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition duration-300 flex flex-col justify-between overflow-hidden group">
+                    <div>
+                        <div class="h-2 bg-gradient-to-r ${theme.header}"></div>
+                        <div class="p-6">
+                            <div class="flex items-start justify-between gap-3 mb-4">
+                                <div class="w-12 h-12 rounded-2xl border ${theme.icon} flex items-center justify-center text-xl shadow-sm shrink-0 group-hover:scale-110 transition">
+                                    <i class="fas ${app.icon}"></i>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${theme.badge}">
+                                    ${app.badge}
+                                </span>
+                            </div>
+                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">${app.category}</div>
+                            <h3 class="text-lg font-extrabold text-slate-900 group-hover:text-blue-600 transition">${app.name}</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed mt-2">${app.description}</p>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <span class="text-[11px] text-slate-400 font-semibold truncate max-w-[175px]">
+                            <i class="fas fa-link mr-1 text-slate-300"></i>${host}
+                        </span>
+                        <a href="${app.url}" target="_blank" rel="noopener noreferrer" class="${theme.btn} text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2">
+                            <span>Akses Web</span>
+                            <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // =========================================================================
+        // 2. FILTER TANGGAL & RENDER TABEL DATA REGISTRASI WIFI (ADMIN)
+        // =========================================================================
+        function getFilteredWifiMembers() {
+            const start = document.getElementById('wifiFilterStart')?.value || '';
+            const end = document.getElementById('wifiFilterEnd')?.value || '';
+            const type = document.getElementById('wifiFilterType')?.value || 'all';
+            const query = (document.getElementById('wifiFilterSearch')?.value || '').toLowerCase().trim();
+
+            return wifiMembersData.filter(m => {
+                const mDate = String(m.input_date || '');
+                const matchStart = !start || mDate >= start;
+                const matchEnd = !end || mDate <= end;
+                const matchType = (type === 'all' || m.type === type);
+                const searchStr = `${m.identity_number} ${m.name} ${m.email} ${m.faculty} ${m.department}`.toLowerCase();
+                const matchQuery = !query || searchStr.includes(query);
+                return matchStart && matchEnd && matchType && matchQuery;
+            });
+        }
+
+        function renderAdminWifiTable() {
+            const tbody = document.getElementById('adminWifiTableBody');
+            const filtered = getFilteredWifiMembers();
+            document.getElementById('countAdminWifi').innerText = wifiMembersData.length;
+            document.getElementById('wifiTotalCount').innerText = wifiMembersData.length;
+            document.getElementById('wifiFilteredCount').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400 font-bold">Tidak ada data pendaftar WiFi yang sesuai dengan filter tanggal/pencarian.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(wm => {
+                let typeBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Mahasiswa (5M)</span>`;
+                if (wm.type === 'lecturer') typeBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800">Dosen (15M)</span>`;
+                if (wm.type === 'employee') typeBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800">Pegawai (10M)</span>`;
+
+                const unitInfo = wm.type === 'employee' ? `Unit: ${wm.department}` : `${wm.faculty} - ${wm.department}`;
+                const statusBadge = wm.status === 'active'
+                    ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">Aktif</span>`
+                    : `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">Nonaktif</span>`;
+
+                return `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-4 px-5 font-mono font-extrabold text-slate-900">${wm.identity_number}</td>
+                    <td class="py-4 px-5">
+                        <div class="font-extrabold text-slate-900">${wm.name}</div>
+                        <div class="text-slate-500 text-[11px]">${wm.email}</div>
+                    </td>
+                    <td class="py-4 px-5">${typeBadge}</td>
+                    <td class="py-4 px-5 font-semibold text-slate-700">${unitInfo}</td>
+                    <td class="py-4 px-5 text-slate-500">${wm.input_date}</td>
+                    <td class="py-4 px-5 text-center">${statusBadge}</td>
+                    <td class="py-4 px-5 text-center whitespace-nowrap">
+                        <button onclick="quickInspectWifi('${wm.identity_number}')" class="bg-cyan-50 hover:bg-cyan-100 text-cyan-700 p-2 rounded-lg mr-1" title="Cek Status">
+                            <i class="fas fa-satellite-dish"></i>
+                        </button>
+                        <button onclick="editWifiMember('${wm.identity_number}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-lg mr-1" title="Edit Member">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteWifiMember('${wm.identity_number}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function resetWifiFilter() {
+            document.getElementById('wifiFilterStart').value = '';
+            document.getElementById('wifiFilterEnd').value = '';
+            document.getElementById('wifiFilterType').value = 'all';
+            document.getElementById('wifiFilterSearch').value = '';
+            renderAdminWifiTable();
+        }
+
+        function getExportDateLabel() {
+            const start = document.getElementById('wifiFilterStart')?.value || '';
+            const end = document.getElementById('wifiFilterEnd')?.value || '';
+            if (start && end) return `${start}_sd_${end}`;
+            if (start) return `mulai_${start}`;
+            if (end) return `sampai_${end}`;
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // EXPORT SESUAI TANGGAL FILTER
+        function exportWifiExcel() {
+            const data = getFilteredWifiMembers();
+            if (!data.length) return alert('Tidak ada data member WiFi pada filter tanggal yang dipilih.');
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data WiFi UMMU");
+            XLSX.writeFile(wb, `Data_WiFi_UMMU_${getExportDateLabel()}.xlsx`);
+        }
+
+        function exportMikrotikRsc() {
+            const data = getFilteredWifiMembers();
+            if (!data.length) return alert('Tidak ada data member WiFi pada filter tanggal yang dipilih.');
+            let script = `# Script Import Hotspot User MikroTik UMMU (${getExportDateLabel()})\n/ip hotspot user\n`;
+            data.forEach(m => {
+                let profile = m.type === 'lecturer' ? 'Dosen_15M' : (m.type === 'employee' ? 'Pegawai_10M' : 'Mahasiswa_5M');
+                script += `add name="${m.identity_number}" password="${m.identity_number}" profile="${profile}" comment="${m.name} - ${m.type} (${m.input_date})" disabled=${m.status === 'active' ? 'no' : 'yes'}\n`;
+            });
+            downloadTextFile(`mikrotik_hotspot_ummu_${getExportDateLabel()}.rsc`, script);
+        }
+
+        function exportRadiusSql() {
+            const data = getFilteredWifiMembers();
+            if (!data.length) return alert('Tidak ada data member WiFi pada filter tanggal yang dipilih.');
+            let sql = `-- Script Import FreeRADIUS radcheck UMMU (${getExportDateLabel()})\n`;
+            data.forEach(m => {
+                let group = m.type === 'lecturer' ? 'Dosen' : (m.type === 'employee' ? 'Pegawai' : 'Mahasiswa');
+                sql += `INSERT INTO radcheck (username, attribute, op, value) VALUES ('${m.identity_number}', 'Cleartext-Password', ':=', '${m.identity_number}');\n`;
+                sql += `INSERT INTO radusergroup (username, groupname, priority) VALUES ('${m.identity_number}', '${group}', 1);\n`;
+            });
+            downloadTextFile(`radius_users_ummu_${getExportDateLabel()}.sql`, sql);
+        }
+
+        function printAllWifiVouchers() {
+            const data = getFilteredWifiMembers();
+            if (!data.length) return alert('Tidak ada data member WiFi pada filter tanggal yang dipilih.');
+            let html = `<html><head><title>Cetak Kartu Akun WiFi UMMU</title><style>
+                body{font-family:Arial,sans-serif;padding:20px} .grid{display:flex;flex-wrap:wrap;gap:12px}
+                .card{width:30%;border:2px dashed #1e3a8a;padding:14px;border-radius:10px;text-align:center}
+                .title{font-weight:bold;color:#1e3a8a;margin-bottom:6px} .cred{background:#f1f5f9;padding:8px;font-weight:bold;margin:8px 0;font-family:monospace}
+            </style></head><body><h2 style="text-align:center">Daftar Akun Hotspot Kampus UMMU (${getExportDateLabel()})</h2><div class="grid">`;
+            data.forEach(m => {
+                html += `<div class="card"><div class="title">HOTSPOT UMMU</div><div><b>${m.name}</b></div><div style="font-size:12px">${m.type.toUpperCase()} • ${m.input_date}</div>
+                         <div class="cred">User: ${m.identity_number}<br>Pass: ${m.identity_number}</div></div>`;
+            });
+            html += `</div></body></html>`;
+            const w = window.open('', '', 'width=850,height=650');
+            w.document.write(html); w.document.close();
+            setTimeout(() => w.print(), 400);
+        }
+
+        // =========================================================================
+        // 3. REGISTRASI WIFI, CEK STATUS, & CRUD ADMIN
+        // =========================================================================
+        function toggleWifiUnitFields() {
+            const type = document.getElementById('wifi_type').value;
+            document.getElementById('wifi_faculty_wrap').classList.toggle('hidden', type === 'employee');
+            document.getElementById('wifi_dept_wrap').classList.toggle('hidden', type === 'employee');
+            document.getElementById('wifi_unit_wrap').classList.toggle('hidden', type !== 'employee');
+        }
+
+        function openWifiRegModal() {
+            document.getElementById('wifiModalTitle').innerText = 'Registrasi Akun WiFi Kampus UMMU';
+            document.getElementById('wifi_is_edit').value = '0';
+            const idInput = document.getElementById('wifi_id');
+            idInput.value = ''; idInput.readOnly = false; idInput.classList.remove('bg-slate-100');
+            document.getElementById('wifi_name').value = '';
+            document.getElementById('wifi_birth').value = '';
+            document.getElementById('wifi_type').value = 'student';
+            document.getElementById('wifi_faculty').value = '';
+            document.getElementById('wifi_dept').value = '';
+            document.getElementById('wifi_unit').value = '';
+            document.getElementById('wifi_email').value = '';
+            document.getElementById('wifi_phone').value = '';
+            document.getElementById('wifi_status_wrap').classList.toggle('hidden', !isAdminLoggedIn);
+            toggleWifiUnitFields();
+            openModal('wifiRegModal');
+        }
+
+        function editWifiMember(idNum) {
+            const wm = wifiMembersData.find(m => String(m.identity_number) === String(idNum));
+            if (!wm) return;
+            document.getElementById('wifiModalTitle').innerText = 'Edit Data Akun WiFi Sivitas';
+            document.getElementById('wifi_is_edit').value = '1';
+            const idInput = document.getElementById('wifi_id');
+            idInput.value = wm.identity_number; idInput.readOnly = true; idInput.classList.add('bg-slate-100');
+            document.getElementById('wifi_name').value = wm.name;
+            document.getElementById('wifi_birth').value = wm.birth_date;
+            document.getElementById('wifi_type').value = wm.type;
+            document.getElementById('wifi_email').value = wm.email;
+            document.getElementById('wifi_phone').value = wm.phone || '';
+            document.getElementById('wifi_status').value = wm.status || 'active';
+            document.getElementById('wifi_status_wrap').classList.remove('hidden');
+            toggleWifiUnitFields();
+            if (wm.type === 'employee') {
+                document.getElementById('wifi_unit').value = wm.department;
+            } else {
+                document.getElementById('wifi_faculty').value = wm.faculty;
+                document.getElementById('wifi_dept').value = wm.department;
+            }
+            openModal('wifiRegModal');
+        }
+
+        async function submitWifiRegistration(e) {
+            e.preventDefault();
+            const isEdit = document.getElementById('wifi_is_edit').value === '1';
+            const idNumber = document.getElementById('wifi_id').value.trim();
+            const name = document.getElementById('wifi_name').value.trim();
+            const birthDate = document.getElementById('wifi_birth').value;
+            const type = document.getElementById('wifi_type').value;
+            const email = document.getElementById('wifi_email').value.trim().toLowerCase();
+            const phone = document.getElementById('wifi_phone').value.trim();
+            const faculty = type === 'employee' ? '-' : (document.getElementById('wifi_faculty').value.trim() || '-');
+            const department = type === 'employee' ? (document.getElementById('wifi_unit').value.trim() || '-') : (document.getElementById('wifi_dept').value.trim() || '-');
+            const status = isAdminLoggedIn ? document.getElementById('wifi_status').value : 'active';
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!email.endsWith('@gmail.com')) {
+                return alert('Gagal: Alamat Email wajib menggunakan akun @gmail.com aktif!');
+            }
+
+            const existingIdx = wifiMembersData.findIndex(m => String(m.identity_number) === idNumber);
+            if (existingIdx !== -1 && !isEdit) {
+                return alert(`Data Duplikat! NIM/NIP (${idNumber}) sudah terdaftar pada sistem WiFi UMMU.`);
+            }
+
+            const memberObj = {
+                identity_number: idNumber, name, birth_date: birthDate, email, phone,
+                type, faculty, department, status,
+                input_date: isEdit && existingIdx !== -1 ? wifiMembersData[existingIdx].input_date : today
+            };
+
+            if (isEdit && existingIdx !== -1) {
+                wifiMembersData[existingIdx] = memberObj;
+                showFlash(`Data akun WiFi (${idNumber} - ${name}) berhasil diperbarui!`);
+            } else {
+                wifiMembersData.unshift(memberObj);
+                showFlash('Registrasi Akun WiFi Kampus Berhasil! Kredensial Anda siap digunakan.');
+                showSingleVoucherCard(memberObj);
+            }
+
+            saveLocalCache();
+            renderAll();
+            closeModal('wifiRegModal');
+
+            await postToGoogleSheets({ action: 'register_wifi', is_edit: isEdit, ...memberObj });
+        }
+
+        function showSingleVoucherCard(m) {
+            const prof = m.type === 'lecturer' ? 'Dosen_15M (15 Mbps)' : (m.type === 'employee' ? 'Pegawai_10M (10 Mbps)' : 'Mahasiswa_5M (5 Mbps)');
+            const box = document.getElementById('voucherCardContainer');
+            box.classList.remove('hidden');
+            box.innerHTML = `
+            <div class="bg-white rounded-3xl border-2 border-emerald-500 shadow-2xl overflow-hidden p-6 sm:p-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Registrasi Berhasil</span>
+                            <h3 class="text-lg font-extrabold text-slate-900 mt-0.5">Kartu Kredensial Hotspot UMMU</h3>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="printSingleWifiCard()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow flex items-center gap-2">
+                            <i class="fas fa-print"></i> Cetak Kartu Akun
+                        </button>
+                        <button onclick="document.getElementById('voucherCardContainer').classList.add('hidden')" class="bg-slate-100 text-slate-600 px-3 py-2.5 rounded-xl text-xs font-bold">Tutup</button>
+                    </div>
+                </div>
+                <div id="printableSingleCard" class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-5 bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs">
+                    <div>
+                        <span class="text-slate-400 font-semibold block">Nama Lengkap Sivitas:</span>
+                        <span class="text-sm font-extrabold text-slate-900">${m.name}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 font-semibold block">Unit / Fakultas & Prodi:</span>
+                        <span class="font-bold text-slate-800">${m.faculty} / ${m.department}</span>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-blue-200">
+                        <span class="text-[10px] font-extrabold uppercase text-blue-600 block">Username Login WiFi (NIM/NIP):</span>
+                        <span class="text-base font-black text-slate-900 font-mono">${m.identity_number}</span>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-blue-200">
+                        <span class="text-[10px] font-extrabold uppercase text-blue-600 block">Password Default Hotspot:</span>
+                        <span class="text-base font-black text-slate-900 font-mono">${m.identity_number}</span>
+                    </div>
+                    <div class="sm:col-span-2 flex items-center justify-between text-[11px] text-slate-500 pt-2">
+                        <span>Profil Bandwidth: <strong class="text-slate-800">${prof}</strong></span>
+                        <span>Tgl Aktif: <strong>${m.input_date}</strong></span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        async function deleteWifiMember(idNum) {
+            if (!confirm(`Hapus akun WiFi (${idNum})?`)) return;
+            wifiMembersData = wifiMembersData.filter(m => String(m.identity_number) !== String(idNum));
+            saveLocalCache();
+            renderAll();
+            showFlash(`Data member WiFi (${idNum}) berhasil dihapus.`);
+            await postToGoogleSheets({ action: 'delete_wifi_member', identity_number: idNum });
+        }
+
+        function quickInspectWifi(idNumber) {
+            openModal('checkWifiModal');
+            document.getElementById('check_wifi_input').value = idNumber;
+            checkWifiAccount();
+        }
+
+        function checkWifiAccount() {
+            const id = document.getElementById('check_wifi_input').value.trim();
+            const box = document.getElementById('check_wifi_result');
+            if (!id) return;
+            box.classList.remove('hidden');
+
+            const d = wifiMembersData.find(m => String(m.identity_number) === id);
+            if (d) {
+                const prof = d.type === 'lecturer' ? 'Dosen_15M (15 Mbps)' : (d.type === 'employee' ? 'Pegawai_10M (10 Mbps)' : 'Mahasiswa_5M (5 Mbps)');
+                box.innerHTML = `
+                <div class="p-4 rounded-2xl border bg-emerald-50/90 border-emerald-200 text-emerald-950 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-xs uppercase tracking-wider text-emerald-700"><i class="fas fa-database mr-1"></i> Database Portal & Google Sheets UMMU</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-200 text-emerald-900">TERDAFTAR (${d.status.toUpperCase()})</span>
+                    </div>
+                    <div class="text-sm font-extrabold pt-1">${d.name}</div>
+                    <div class="text-[11px] text-emerald-800">Identitas (Username): <b class="font-mono">${d.identity_number}</b> • Profil: <b>${prof}</b> • Tgl Daftar: <b>${d.input_date}</b></div>
+                </div>`;
+            } else {
+                box.innerHTML = `
+                <div class="p-3.5 rounded-2xl border bg-rose-50 border-rose-200 text-rose-800 flex items-center justify-between">
+                    <span><i class="fas fa-times-circle mr-1.5"></i> <b>Database Portal:</b> NIM/NIP (${id}) Belum Terdaftar</span>
+                </div>
+                <div class="pt-2 text-right">
+                    <button onclick="closeModal('checkWifiModal'); openWifiRegModal();" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-extrabold shadow">
+                        <i class="fas fa-user-plus mr-1"></i> Daftar Akun WiFi Sekarang
+                    </button>
+                </div>`;
+            }
+        }
+
+        // CRUD APLIKASI WEB (ADMIN)
+        function renderAdminAppsTable() {
+            document.getElementById('countAdminApps').innerText = appsData.length;
+            const tbody = document.getElementById('adminAppsTableBody');
+            const sorted = [...appsData].sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+            tbody.innerHTML = sorted.map(app => `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-4 px-5 font-extrabold text-slate-500">#${app.sort_order}</td>
+                    <td class="py-4 px-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-base shrink-0">
+                                <i class="fas ${app.icon}"></i>
+                            </div>
+                            <div>
+                                <div class="font-extrabold text-slate-900 text-sm">${app.name}</div>
+                                <a href="${app.url}" target="_blank" class="text-blue-600 hover:underline font-medium">${app.url}</a>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-5 font-semibold text-slate-700">${app.category}</td>
+                    <td class="py-4 px-5">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">${app.badge}</span>
+                    </td>
+                    <td class="py-4 px-5 text-center">
+                        <button onclick="toggleAppStatus(${app.id})" class="px-3 py-1 rounded-full text-[11px] font-extrabold transition ${Number(app.is_active) === 1 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}">
+                            ${Number(app.is_active) === 1 ? 'Aktif (Publik)' : 'Disembunyikan'}
+                        </button>
+                    </td>
+                    <td class="py-4 px-5 text-center whitespace-nowrap">
+                        <button onclick="editApp(${app.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-lg mr-1"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteApp(${app.id})" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openAppModal() {
+            document.getElementById('appModalTitle').innerText = 'Tambah Aplikasi Web Baru';
+            document.getElementById('form_app_id').value = '';
+            document.getElementById('form_name').value = '';
+            document.getElementById('form_url').value = '';
+            document.getElementById('form_category').value = 'Akademik & Kemahasiswaan';
+            document.getElementById('form_badge').value = 'LAYANAN WEB';
+            document.getElementById('form_icon').value = 'fa-globe';
+            document.getElementById('form_color').value = 'blue';
+            document.getElementById('form_sort').value = '10';
+            document.getElementById('form_active').checked = true;
+            document.getElementById('form_description').value = '';
+            openModal('appModal');
+        }
+
+        function editApp(id) {
+            const app = appsData.find(a => Number(a.id) === Number(id));
+            if (!app) return;
+            document.getElementById('appModalTitle').innerText = 'Edit Aplikasi Web';
+            document.getElementById('form_app_id').value = app.id;
+            document.getElementById('form_name').value = app.name;
+            document.getElementById('form_url').value = app.url;
+            document.getElementById('form_category').value = app.category;
+            document.getElementById('form_badge').value = app.badge;
+            document.getElementById('form_icon').value = app.icon;
+            document.getElementById('form_color').value = app.color;
+            document.getElementById('form_sort').value = app.sort_order;
+            document.getElementById('form_active').checked = Number(app.is_active) === 1;
+            document.getElementById('form_description').value = app.description;
+            openModal('appModal');
+        }
+
+        async function saveAppForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('form_app_id').value ? Number(document.getElementById('form_app_id').value) : Date.now();
+            const obj = {
+                id,
+                name: document.getElementById('form_name').value.trim(),
+                url: document.getElementById('form_url').value.trim(),
+                category: document.getElementById('form_category').value.trim(),
+                badge: document.getElementById('form_badge').value.trim().toUpperCase() || 'LAYANAN WEB',
+                icon: document.getElementById('form_icon').value,
+                color: document.getElementById('form_color').value,
+                sort_order: Number(document.getElementById('form_sort').value || 10),
+                is_active: document.getElementById('form_active').checked ? 1 : 0,
+                description: document.getElementById('form_description').value.trim()
+            };
+
+            const idx = appsData.findIndex(a => Number(a.id) === id);
+            if (idx !== -1) appsData[idx] = obj;
+            else appsData.push(obj);
+
+            saveLocalCache();
+            renderAll();
+            closeModal('appModal');
+            showFlash('Data aplikasi web berhasil disimpan!');
+            await postToGoogleSheets({ action: 'save_app', ...obj });
+        }
+
+        async function toggleAppStatus(id) {
+            const app = appsData.find(a => Number(a.id) === Number(id));
+            if (!app) return;
+            app.is_active = Number(app.is_active) === 1 ? 0 : 1;
+            saveLocalCache();
+            renderAll();
+            await postToGoogleSheets({ action: 'save_app', ...app });
+        }
+
+        async function deleteApp(id) {
+            if (!confirm('Hapus aplikasi ini dari portal?')) return;
+            appsData = appsData.filter(a => Number(a.id) !== Number(id));
+            saveLocalCache();
+            renderAll();
+            showFlash('Aplikasi berhasil dihapus.');
+            await postToGoogleSheets({ action: 'delete_app', id });
+        }
+
+        // IMPORT & TEMPLATE EXCEL
+        function downloadWifiTemplate() {
+            const ws_data = [
+                ['identity_number', 'name', 'birth_date', 'email', 'phone', 'type', 'faculty', 'department', 'status', 'input_date'],
+                ['1210555201', 'Ahmad Fauzi', '2003-05-15', 'ahmad@gmail.com', '08123456789', 'student', 'Teknik', 'Informatika', 'active', '2026-10-27'],
+                ['9900112233', 'Budi Santoso', '1985-10-10', 'budi@gmail.com', '0852555444', 'employee', '-', 'Biro BITD', 'active', '2026-10-27']
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template WiFi");
+            XLSX.writeFile(wb, "template_import_wifi_ummu.xlsx");
+        }
+
+        function handleWifiExcelImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                const data = new Uint8Array(ev.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const today = new Date().toISOString().split('T')[0];
+                let inserted = 0, skipped = 0;
+
+                rows.forEach(r => {
+                    const idStr = String(r.identity_number || '').trim();
+                    const nameStr = String(r.name || '').trim();
+                    const emailStr = String(r.email || '').trim().toLowerCase();
+                    const exists = wifiMembersData.some(m => String(m.identity_number) === idStr);
+                    if (!idStr || !nameStr || !emailStr.endsWith('@gmail.com') || exists) {
+                        skipped++;
+                    } else {
+                        wifiMembersData.unshift({
+                            identity_number: idStr, name: nameStr, birth_date: r.birth_date || '2000-01-01',
+                            email: emailStr, phone: r.phone || '',
+                            type: ['student', 'lecturer', 'employee'].includes(r.type) ? r.type : 'student',
+                            faculty: r.faculty || '-', department: r.department || '-',
+                            status: r.status === 'inactive' ? 'inactive' : 'active',
+                            input_date: r.input_date || today
+                        });
+                        inserted++;
+                    }
+                });
+
+                saveLocalCache();
+                renderAll();
+                alert(`Import Selesai!\nBerhasil ditambahkan: ${inserted} akun\nDilewati (Duplikat/Non-Gmail): ${skipped} baris`);
+                await postToGoogleSheets({ action: 'import_wifi', rows });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // LOGIN, LOGO, & NAVIGASI VIEW
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login_user').value.trim();
+            const p = document.getElementById('login_pass').value;
+            const savedPass = localStorage.getItem('ummu_admin_pass') || 'adminummu2026';
+            if (u === 'admin' && p === savedPass) {
+                isAdminLoggedIn = true;
+                sessionStorage.setItem('ummu_admin_login', '1');
+                closeModal('loginModal');
+                switchView('admin');
+                showFlash('Selamat datang di Dashboard Administrator Portal UMMU!');
+            } else {
+                alert('Username atau Password Administrator salah!');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            sessionStorage.removeItem('ummu_admin_login');
+            switchView('user');
+        }
+
+        function switchView(view) {
+            const isUser = view === 'user' || !isAdminLoggedIn;
+            document.getElementById('userViewSection').classList.toggle('hidden', !isUser);
+            document.getElementById('adminViewSection').classList.toggle('hidden', isUser);
+            document.getElementById('publicNavLinks').classList.toggle('hidden', !isUser);
+            document.getElementById('guestNavActions').classList.toggle('hidden', isAdminLoggedIn);
+            document.getElementById('adminNavActions').classList.toggle('hidden', !isAdminLoggedIn);
+            document.getElementById('adminNavActions').classList.toggle('flex', isAdminLoggedIn);
+
+            if (isAdminLoggedIn) {
+                document.getElementById('btnViewUser').className = isUser
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow'
+                    : 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white';
+                document.getElementById('btnViewAdmin').className = !isUser
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow'
+                    : 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white';
+            }
+        }
+
+        function switchAdminTab(tab) {
+            const isWifi = tab === 'wifi';
+            document.getElementById('adminTabAppsContent').classList.toggle('hidden', isWifi);
+            document.getElementById('adminTabWifiContent').classList.toggle('hidden', !isWifi);
+            document.getElementById('tabBtnApps').className = !isWifi
+                ? 'px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-blue-600 text-blue-600 bg-white'
+                : 'px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-800';
+            document.getElementById('tabBtnWifi').className = isWifi
+                ? 'px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-indigo-600 text-indigo-600 bg-white'
+                : 'px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-800';
+        }
+
+        function saveGsConfig(e) {
+            e.preventDefault();
+            GOOGLE_SCRIPT_URL = document.getElementById('gs_script_url').value.trim();
+            localStorage.setItem('ummu_gs_url', GOOGLE_SCRIPT_URL);
+            closeModal('gsConfigModal');
+            loadFromGoogleSheets();
+            showFlash('Konfigurasi URL Google Sheets berhasil disimpan!');
+        }
+
+        function updatePortalLogo(e) {
+            e.preventDefault();
+            const file = document.getElementById('logo_file_input').files[0];
+            const urlTxt = document.getElementById('logo_url_input').value.trim();
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    applyLogo(ev.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else if (urlTxt) {
+                applyLogo(urlTxt);
+            }
+            closeModal('logoModal');
+        }
+
+        function applyLogo(src) {
+            localStorage.setItem('ummu_logo', src);
+            document.getElementById('navLogoImg').src = src;
+            document.getElementById('footerLogoImg').src = src;
+            document.getElementById('adminHeaderLogo').src = src;
+            showFlash('Logo Portal berhasil diperbarui secara dinamis!');
+        }
+
+        function changeAdminPass(e) {
+            e.preventDefault();
+            const p = document.getElementById('new_admin_pass').value;
+            localStorage.setItem('ummu_admin_pass', p);
+            closeModal('passModal');
+            showFlash('Password Administrator berhasil diperbarui!');
+        }
+
+        function printSingleWifiCard() {
+            const content = document.getElementById('printableSingleCard').innerHTML;
+            const w = window.open('', '', 'width=600,height=450');
+            w.document.write(`<html><head><title>Kartu Akun WiFi UMMU</title></head><body style="font-family:Arial,sans-serif;padding:30px;border:2px dashed #1e3a8a;border-radius:16px">
+                <h2 style="color:#1e3a8a;margin-top:0">KARTU KREDENSIAL HOTSPOT UMMU</h2>${content}</body></html>`);
+            w.document.close();
+            setTimeout(() => w.print(), 300);
+        }
+
+        function downloadTextFile(filename, text) {
+            const blob = new Blob([text], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+
+        function renderAll() {
+            renderPublicCategories();
+            renderPublicApps();
+            renderAdminAppsTable();
+            renderAdminWifiTable();
+        }
+
+        // INIT SAAT HALAMAN DIMUAT
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLogo = localStorage.getItem('ummu_logo');
+            if (savedLogo) applyLogo(savedLogo);
+            document.getElementById('gs_script_url').value = GOOGLE_SCRIPT_URL;
+            renderAll();
+            if (isAdminLoggedIn) switchView('admin');
+            loadFromGoogleSheets();
+        });
+    </script>
+</body>
+</html>
