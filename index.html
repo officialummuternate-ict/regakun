@@ -40,7 +40,7 @@
             <nav id="publicNavLinks" class="hidden lg:flex items-center space-x-7 text-xs font-bold uppercase tracking-wider text-slate-300">
                 <a href="#katalog-aplikasi" class="hover:text-white transition">Direktori Aplikasi</a>
                 <a href="#layanan-wifi" class="hover:text-white transition flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Registrasi WiFi
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Input Data WiFi
                 </a>
                 <button onclick="openModal('checkWifiModal')" class="hover:text-white transition uppercase flex items-center gap-1.5 text-cyan-300">
                     <i class="fas fa-satellite-dish"></i> Cek Status Akun Wifi
@@ -112,7 +112,7 @@
                 <!-- Bar Pintasan Cepat -->
                 <div class="flex flex-wrap justify-center gap-3 text-xs font-bold">
                     <button onclick="openWifiRegModal()" class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition flex items-center gap-2">
-                        <i class="fas fa-user-plus"></i> Registrasi Mandiri WiFi Kampus
+                        <i class="fas fa-user-plus"></i> Input Data Mandiri WiFi Kampus
                     </button>
                     <!-- <button onclick="openModal('checkWifiModal')" class="px-5 py-3 rounded-xl bg-cyan-600/90 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-600/25 transition flex items-center gap-2">
                         <i class="fas fa-satellite-dish"></i> Cek Status Akun di MikroTik / RADIUS
@@ -229,7 +229,7 @@
                 <i class="fas fa-th-large"></i> Direktori Aplikasi Web (<span id="countAdminApps">0</span>)
             </button>
             <button id="tabBtnWifi" onclick="switchAdminTab('wifi')" class="px-6 py-3.5 text-xs font-extrabold rounded-t-2xl border-b-2 transition flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-800">
-                <i class="fas fa-wifi"></i> Data Registrasi WiFi & Integrasi MikroTik/RADIUS (<span id="countAdminWifi">0</span>)
+                <i class="fas fa-wifi"></i> Data Input Data Mandiri WiFi(<span id="countAdminWifi">0</span>)
             </button>
         </div>
 
@@ -415,7 +415,7 @@
                         <i class="fas fa-wifi"></i>
                     </div>
                     <div>
-                        <h3 id="wifiModalTitle" class="text-base sm:text-lg font-extrabold">Registrasi Akun WiFi Kampus UMMU</h3>
+                        <h3 id="wifiModalTitle" class="text-base sm:text-lg font-extrabold">Input Data Akun WiFi Kampus UMMU</h3>
                         <p class="text-[11px] text-blue-200">Pendaftaran akses internet Hotspot Mahasiswa, Dosen & Pegawai</p>
                     </div>
                 </div>
@@ -572,7 +572,7 @@
                             <option value="fa-journal-whills">Jurnal Ilmiah (fa-journal-whills)</option>
                             <option value="fa-book">Perpustakaan (fa-book)</option>
                             <option value="fa-credit-card">Pembayaran / Keuangan (fa-credit-card)</option>
-                            <option value="fa-clipboard-check">Registrasi / Verifikasi (fa-clipboard-check)</option>
+                            <option value="fa-clipboard-check">Input Data / Verifikasi (fa-clipboard-check)</option>
                             <option value="fa-users-cog">Kemahasiswaan / P2KK (fa-users-cog)</option>
                         </select>
                     </div>
@@ -1090,7 +1090,7 @@
         }
 
         function openWifiRegModal() {
-            document.getElementById('wifiModalTitle').innerText = 'Registrasi Akun WiFi Kampus UMMU';
+            document.getElementById('wifiModalTitle').innerText = 'Input Data Mandiri Akun WiFi Kampus UMMU';
             document.getElementById('wifi_is_edit').value = '0';
             const idInput = document.getElementById('wifi_id');
             idInput.value = ''; idInput.readOnly = false; idInput.classList.remove('bg-slate-100');
@@ -1166,7 +1166,7 @@
             } else {
                 wifiMembersData.unshift(memberObj);
                 wifiCurrentPage = 1;
-                showFlash('Registrasi Akun WiFi Kampus Berhasil Dikirim! Akun akan diproses 1x24 jam, mohon dicek setiap saat.');
+                showFlash('Input Data Mandiri Akun WiFi Kampus Berhasil Dikirim! Akun akan diproses 1x24 jam, mohon dicek setiap saat. Jika sudah Selesai di Proses Segera Registrasi Akun Anda ke Website Layanan Registrasi WiFi UMMU');
                 showProcessingInfoCard(memberObj);
             }
 
@@ -1189,7 +1189,7 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-extrabold uppercase tracking-widest bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">Registrasi Berhasil Diterima</span>
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">Input Data Berhasil Diterima</span>
                             <h3 class="text-lg font-extrabold text-slate-900 mt-0.5">Informasi: Akun Akan Diproses 1x24 Jam</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Mohon dicek setiap saat melalui menu <b>Cek Status Wifi</b>.</p>
                         </div>
